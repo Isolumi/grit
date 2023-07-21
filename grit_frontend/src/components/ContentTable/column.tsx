@@ -1,7 +1,8 @@
 import { Column } from "react-table";
-import { useMemo, useState } from "react";
-import { DropdownButton, Button } from "react-bootstrap";
+import { useMemo, useState, useEffect } from "react";
+import { DropdownButton, Button, Dropdown } from "react-bootstrap";
 import FilterBox from "./FilterBox";
+import { useNavigate } from "react-router-dom";
 
 export function getTableColumns(
   currentPage: number,
@@ -9,7 +10,9 @@ export function getTableColumns(
   scFilters: ScFilters,
   setAcFilters: any,
   setScFilters: any,
+  data: Data[]
 ): Column<Data>[] {
+  const navigate = useNavigate();
 
   const handleAcFilters = (newAcFilters: AcFilters) => {
     setAcFilters(newAcFilters);
@@ -21,6 +24,23 @@ export function getTableColumns(
   };
 
   const [btn, setBtn] = useState(false);
+  const [isFilter, setIsFilter] = useState<boolean>(false);
+  const [displayedData, setDisplayedData] = useState<Data[]>([]);
+
+  useEffect(() => {
+    if (!isFilter) {
+      console.log('false');
+      const seen = new Set();
+      const uniqueData = data.filter((el) => {
+        const duplicate = seen.has(el.billingAccountNum);
+        seen.add(el.billingAccountNum);
+        return !duplicate;
+      });
+      setDisplayedData(uniqueData);
+    } else {
+      console.log('true');
+    }
+  }, [data]);
 
   return useMemo<Column<Data>[]>(
     () => [
@@ -67,11 +87,39 @@ export function getTableColumns(
         accessor: "txnEffectiveTs",
       },
       {
-        Header: "Billing Account Num",
+        Header: () => {
+          const handleFilterSelect = (item: Data) => {
+            setIsFilter(true);
+            navigate(`/?BAN=${item.billingAccountNum}`);
+          };
+          const handleBtn = () => {
+            setIsFilter(false);
+            navigate(`/`)
+          }
+
+          return (
+            <DropdownButton id="headerBtn" title="Billing Account Number">
+              <div className="flex flex-col justify-center">
+                {displayedData.map((item, index) => (
+                  <Dropdown.Item
+                    key={index}
+                    eventKey={index}
+                    onClick={() => {
+                      handleFilterSelect(item);
+                    }}
+                  >
+                    {item.billingAccountNum.toString()}
+                  </Dropdown.Item>
+                ))}
+                <Button size="sm" onClick={handleBtn}>Reset</Button>
+              </div>
+            </DropdownButton>
+          );
+        },
         accessor: "billingAccountNum",
-        width: 200,
-        minWidth: 200,
-        maxWidth: 200,
+        width: 250,
+        minWidth: 250,
+        maxWidth: 250,
       },
       {
         Header: "External ID",
@@ -111,18 +159,61 @@ export function getTableColumns(
             <div>
               <DropdownButton id="headerBtn" title="Activity Code">
                 <div className="flex flex-col justify-center">
-                  <FilterBox id='bcc' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='rcl' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='sch' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='sus' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='rsp' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='nac' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='ub' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='bl' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='can' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='mcn' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  
-                  <Button size="sm" onClick={() => handleAcFilters(currFilters)}>
+                  <FilterBox
+                    id="bcc"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="rcl"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="sch"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="sus"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="rsp"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="nac"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="ub"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="bl"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="can"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="mcn"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+
+                  <Button
+                    size="sm"
+                    onClick={() => handleAcFilters(currFilters)}
+                  >
                     Filter
                   </Button>
                 </div>
@@ -186,10 +277,21 @@ export function getTableColumns(
             <div>
               <DropdownButton id="headerBtn" title="Status Code">
                 <div className="flex flex-col justify-center">
-                  <FilterBox id='success' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  <FilterBox id='error' filters={currFilters} handleFilters={handleCurrFilters}/>
-                  
-                  <Button size="sm" onClick={() => handleScFilters(currFilters)}>
+                  <FilterBox
+                    id="success"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+                  <FilterBox
+                    id="error"
+                    filters={currFilters}
+                    handleFilters={handleCurrFilters}
+                  />
+
+                  <Button
+                    size="sm"
+                    onClick={() => handleScFilters(currFilters)}
+                  >
                     Filter
                   </Button>
                 </div>
@@ -245,6 +347,6 @@ export function getTableColumns(
         maxWidth: 200,
       },
     ],
-    [currentPage, btn]
+    [currentPage, btn, data, isFilter]
   );
 }
